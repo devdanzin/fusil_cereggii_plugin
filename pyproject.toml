@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fusil-cereggii-plugin"
+version = "0.1.0"
+description = "Fusil plugin for fuzzing the cereggii library"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    {name = "Fusil Developers"}
+]
+dependencies = [
+    "fusil",
+    "cereggii",  # The library we're fuzzing
+]
+
+[project.entry-points."fusil.plugins"]
+cereggii = "fusil_cereggii_plugin:register"
