@@ -17,7 +17,17 @@ def register(manager):
         manager: The PluginManager instance
     """
     print("[Cereggii Plugin] Registering cereggii plugin...")
-    
+
+    # Blacklist internal methods that cause uninteresting crashes
+    manager.add_blacklist_entry('method', '_rehash')  # Internal C method
+    manager.add_blacklist_entry('method', 'wait')  # Blocking method
+
+    # Blacklist test-related classes using glob pattern
+    manager.add_blacklist_entry('class', '*Test', pattern_type='glob')
+    manager.add_blacklist_entry('class', '*TestCase', pattern_type='glob')
+
+    manager.add_whitelist_entry('method', '__del__')
+
     # Import aggregator (which imports all tricky modules)
     try:
         from . import tricky_cereggii_aggregator
