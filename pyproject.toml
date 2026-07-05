@@ -7,7 +7,9 @@ name = "fusil-cereggii-plugin"
 version = "0.1.0"
 description = "Fusil plugin for fuzzing the cereggii library"
 readme = "README.md"
-requires-python = ">=3.8"
+# Matches fusil's floor (fusil requires >=3.13); cereggii's concurrency primitives are the
+# whole point on free-threaded builds.
+requires-python = ">=3.13"
 authors = [
     {name = "Fusil Developers"}
 ]
@@ -18,3 +20,21 @@ dependencies = [
 
 [project.entry-points."fusil.plugins"]
 cereggii = "fusil_cereggii_plugin:register"
+
+[tool.setuptools]
+# List sub-packages explicitly so the samples/ tricky-object modules ship in the wheel.
+packages = ["fusil_cereggii_plugin", "fusil_cereggii_plugin.samples"]
+
+# Mirror fusil's ruff config so the plugin stays clean/consistent with the core.
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+# samples/ are embedded fuzzing *payloads* (their source is spliced verbatim into generated
+# scripts). They deliberately contain unused imports/vars, odd closures, etc. -- lint the
+# plugin logic, not the payloads.
+extend-exclude = ["fusil_cereggii_plugin/samples"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+# The tricky/sample modules do conditional/late imports (optional-feature detection).
+ignore = ["E402"]
