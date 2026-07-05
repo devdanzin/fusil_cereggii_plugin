@@ -44,6 +44,16 @@ def register(manager):
 
     manager.add_whitelist_entry("method", "__del__")
 
+    # The plugin's hostile test objects (tricky_weird_cereggii.py) deliberately raise
+    # SystemError to check that cereggii PROPAGATES it -- that is not a cereggii crash.
+    # Ignore our own synthetic signatures so a caught+printed SystemError does not end the
+    # session early (SystemError is a 1.0 crash-word) or get kept as noise; a genuine
+    # target SystemError (different text) still scores. See PluginManager.add_stdout_ignore_regex.
+    # Guarded: the hook exists only on newer fusil, and the plugin is versioned separately.
+    if hasattr(manager, "add_stdout_ignore_regex"):
+        manager.add_stdout_ignore_regex("Exception from weird subclass")
+        manager.add_stdout_ignore_regex("C-API level error simulation")
+
     # Import aggregator (which imports all tricky modules).
     try:
         from . import tricky_cereggii_aggregator

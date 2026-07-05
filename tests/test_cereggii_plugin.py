@@ -26,6 +26,7 @@ class StubManager:
         self.whitelist = []
         self.hooks = {}
         self.dependencies = []
+        self.stdout_ignore_regexes = []
 
     def add_cli_option(self, *args, **kwargs):
         self.cli_options.append((args, kwargs))
@@ -44,6 +45,9 @@ class StubManager:
 
     def add_whitelist_entry(self, kind, pattern, pattern_type="exact"):
         self.whitelist.append((kind, pattern, pattern_type))
+
+    def add_stdout_ignore_regex(self, pattern):
+        self.stdout_ignore_regexes.append(pattern)
 
     def add_hook(self, name, func):
         self.hooks.setdefault(name, []).append(func)
@@ -108,6 +112,23 @@ class TestRegisterWiring(unittest.TestCase):
         # hook is no longer used.
         self.assertFalse(hasattr(StubManager, "add_scenario_provider"))
         register(StubManager())  # must not raise AttributeError
+
+    def test_synthetic_systemerror_signatures_registered(self):
+        # The plugin's own raise_SystemError / weird-subclass exceptions must be ignored by
+        # crash detection so they don't stop/keep sessions on a newer fusil that has the hook.
+        m = _registered()
+        self.assertIn("Exception from weird subclass", m.stdout_ignore_regexes)
+        self.assertIn("C-API level error simulation", m.stdout_ignore_regexes)
+
+    def test_stdout_ignore_hook_is_optional(self):
+        # On an older fusil without the hook, register() must still succeed (the plugin's
+        # hasattr guard skips the call). hasattr() is False when access raises AttributeError.
+        class OlderManager(StubManager):
+            @property
+            def add_stdout_ignore_regex(self):
+                raise AttributeError("older fusil has no such hook")
+
+        register(OlderManager())  # must not raise
 
 
 class TestActivationCondition(unittest.TestCase):
